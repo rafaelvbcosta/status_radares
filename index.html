@@ -69,7 +69,7 @@
     authDomain: "status-radares.firebaseapp.com",
     databaseURL: "https://status-radares-default-rtdb.firebaseio.com",
     projectId: "status-radares",
-    storageBucket: "status-radares.firebasestorage.app",
+    storageBucket: "status-radares.appspot.com",
     messagingSenderId: "581067300450",
     appId: "1:581067300450:web:2b324f158be44fbacc3b3b",
     measurementId: "G-2XGG503Q90"
@@ -80,6 +80,11 @@
 
   const lista = document.getElementById("lista-equipamentos");
   const coresStatus = ["verde", "amarelo", "vermelho"];
+  const statusLabels = {
+    verde: "Operando",
+    amarelo: "Estacionado",
+    vermelho: "Falha"
+  };
 
   function carregarEquipamentos() {
     const equipamentosRef = ref(db, 'equipamentos');
@@ -92,14 +97,14 @@
 
           const circulo = document.createElement('span');
           circulo.className = `status-circle ${equipamento.status}`;
-          circulo.title = `Status atual: ${equipamento.status}`;
+          circulo.title = `Status atual: ${statusLabels[equipamento.status]}`;
           circulo.style.cursor = 'pointer';
 
           const select = document.createElement('select');
           coresStatus.forEach(cor => {
             const option = document.createElement('option');
             option.value = cor;
-            option.textContent = cor.charAt(0).toUpperCase() + cor.slice(1);
+            option.textContent = statusLabels[cor];
             if (cor === equipamento.status) option.selected = true;
             select.appendChild(option);
           });
