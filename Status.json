@@ -1,0 +1,14 @@
+[
+  {
+    "Equipamento": "SSR001",
+    "Status": "verde"
+  },
+  {
+    "Equipamento": "SSR002",
+    "Status": "vermelho"
+  },
+  {
+    "Equipamento": "SSR003",
+    "Status": "amarelo"
+  }
+]
