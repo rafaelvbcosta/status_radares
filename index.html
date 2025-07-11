@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Status dos Equipamentos</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; max-width: 600px; margin: auto; }
+    h1 { text-align: center; }
+    ul { list-style: none; padding: 0; }
+    li { background: white; margin-bottom: 10px; padding: 10px; border-radius: 8px; display: flex; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .status { width: 16px; height: 16px; border-radius: 50%; margin-right: 15px; }
+    .verde { background-color: #4CAF50; }
+    .amarelo { background-color: #FFC107; }
+    .vermelho { background-color: #F44336; }
+  </style>
+</head>
+<body>
+  <h1>Status dos Equipamentos</h1>
+  <ul id="lista-equipamentos"></ul>
+
+  <script>
+    fetch('status.json')
+      .then(response => response.json())
+      .then(dados => {
+        const lista = document.getElementById('lista-equipamentos');
+        dados.forEach(equip => {
+          const item = document.createElement('li');
+          item.innerHTML = `<span class="status ${equip.status}"></span> ${equip.nome}`;
+          lista.appendChild(item);
+        });
+      });
+  </script>
+</body>
+</html>
