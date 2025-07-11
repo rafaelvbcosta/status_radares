@@ -118,7 +118,13 @@
   const logoutBtn = document.getElementById("logout-btn");
   const userInfo = document.getElementById("user-info");
   const lista = document.getElementById("lista-equipamentos");
-  const coresStatus = ["verde", "amarelo", "vermelho"];
+
+  const statusLabels = {
+    "verde": "Operando",
+    "amarelo": "Estacionado",
+    "vermelho": "Falha"
+  };
+  const statusCores = Object.keys(statusLabels);
 
   let currentUser = null;
 
@@ -161,7 +167,7 @@
 
           const circulo = document.createElement('span');
           circulo.className = `status-circle ${equipamento.status}`;
-          circulo.title = `Status atual: ${equipamento.status}`;
+          circulo.title = `Status atual: ${statusLabels[equipamento.status] || equipamento.status}`;
 
           const nomeSpan = document.createElement('span');
           nomeSpan.textContent = equipamento.nome;
@@ -174,13 +180,12 @@
           infoDiv.appendChild(nomeSpan);
           li.appendChild(infoDiv);
 
-          // Se logado, exibe o seletor
           if (currentUser) {
             const select = document.createElement('select');
-            coresStatus.forEach(cor => {
+            statusCores.forEach(cor => {
               const option = document.createElement('option');
               option.value = cor;
-              option.textContent = cor.charAt(0).toUpperCase() + cor.slice(1);
+              option.textContent = statusLabels[cor];
               if (cor === equipamento.status) option.selected = true;
               select.appendChild(option);
             });
