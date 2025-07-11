@@ -14,7 +14,26 @@
     }
     h1 {
       text-align: center;
-      color: #333;
+    }
+    #login-section {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input {
+      margin: 5px;
+      padding: 8px;
+      font-size: 14px;
+      width: 80%;
+    }
+    button {
+      padding: 8px 16px;
+      margin: 5px;
+      font-size: 14px;
+    }
+    #user-info {
+      font-size: 14px;
+      color: #555;
+      margin-top: 10px;
     }
     ul {
       list-style: none;
@@ -40,7 +59,6 @@
       height: 18px;
       border-radius: 50%;
       border: 2px solid #555;
-      cursor: pointer;
       flex-shrink: 0;
     }
     .verde { background-color: #4CAF50; border-color: #4CAF50; }
@@ -55,36 +73,82 @@
 
 <h1>Status dos Equipamentos</h1>
 
-<ul id="lista-equipamentos">
-  <!-- Equipamentos carregados aqui -->
-</ul>
+<div id="login-section">
+  <input type="email" id="email" placeholder="Seu e-mail" />
+  <input type="password" id="password" placeholder="Senha" />
+  <div>
+    <button id="login-btn">Entrar</button>
+    <button id="register-btn">Registrar</button>
+    <button id="logout-btn" style="display:none;">Sair</button>
+  </div>
+  <div id="user-info"></div>
+</div>
 
-<!-- Firebase SDK -->
+<ul id="lista-equipamentos"></ul>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
   import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA6_vXFyZK6kmj6oWIUclR4VpZmGZ5In-Y",
     authDomain: "status-radares.firebaseapp.com",
     databaseURL: "https://status-radares-default-rtdb.firebaseio.com",
     projectId: "status-radares",
-    storageBucket: "status-radares.appspot.com",
+    storageBucket: "status-radares.firebasestorage.app",
     messagingSenderId: "581067300450",
-    appId: "1:581067300450:web:2b324f158be44fbacc3b3b",
-    measurementId: "G-2XGG503Q90"
+    appId: "1:581067300450:web:2b324f158be44fbacc3b3b"
   };
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+  const auth = getAuth(app);
 
+  const emailEl = document.getElementById("email");
+  const passwordEl = document.getElementById("password");
+  const loginBtn = document.getElementById("login-btn");
+  const registerBtn = document.getElementById("register-btn");
+  const logoutBtn = document.getElementById("logout-btn");
+  const userInfo = document.getElementById("user-info");
   const lista = document.getElementById("lista-equipamentos");
   const coresStatus = ["verde", "amarelo", "vermelho"];
-  const statusLabels = {
-    verde: "Operando",
-    amarelo: "Estacionado",
-    vermelho: "Falha"
+
+  let currentUser = null;
+
+  loginBtn.onclick = () => {
+    signInWithEmailAndPassword(auth, emailEl.value, passwordEl.value)
+      .catch((error) => alert("Erro ao entrar: " + error.message));
   };
+
+  registerBtn.onclick = () => {
+    createUserWithEmailAndPassword(auth, emailEl.value, passwordEl.value)
+      .catch((error) => alert("Erro ao registrar: " + error.message));
+  };
+
+  logoutBtn.onclick = () => signOut(auth);
+
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    if (user) {
+      loginBtn.style.display = "none";
+      registerBtn.style.display = "none";
+      logoutBtn.style.display = "inline-block";
+      userInfo.textContent = `Logado como: ${user.email}`;
+    } else {
+      loginBtn.style.display = "inline-block";
+      registerBtn.style.display = "inline-block";
+      logoutBtn.style.display = "none";
+      userInfo.textContent = "";
+    }
+    carregarEquipamentos();
+  });
 
   function carregarEquipamentos() {
     const equipamentosRef = ref(db, 'equipamentos');
@@ -97,21 +161,7 @@
 
           const circulo = document.createElement('span');
           circulo.className = `status-circle ${equipamento.status}`;
-          circulo.title = `Status atual: ${statusLabels[equipamento.status]}`;
-          circulo.style.cursor = 'pointer';
-
-          const select = document.createElement('select');
-          coresStatus.forEach(cor => {
-            const option = document.createElement('option');
-            option.value = cor;
-            option.textContent = statusLabels[cor];
-            if (cor === equipamento.status) option.selected = true;
-            select.appendChild(option);
-          });
-
-          select.addEventListener('change', () => {
-            set(ref(db, `equipamentos/${id}/status`), select.value);
-          });
+          circulo.title = `Status atual: ${equipamento.status}`;
 
           const nomeSpan = document.createElement('span');
           nomeSpan.textContent = equipamento.nome;
@@ -123,17 +173,32 @@
           infoDiv.appendChild(circulo);
           infoDiv.appendChild(nomeSpan);
           li.appendChild(infoDiv);
-          li.appendChild(select);
+
+          // Se logado, exibe o seletor
+          if (currentUser) {
+            const select = document.createElement('select');
+            coresStatus.forEach(cor => {
+              const option = document.createElement('option');
+              option.value = cor;
+              option.textContent = cor.charAt(0).toUpperCase() + cor.slice(1);
+              if (cor === equipamento.status) option.selected = true;
+              select.appendChild(option);
+            });
+
+            select.addEventListener('change', () => {
+              set(ref(db, `equipamentos/${id}/status`), select.value);
+            });
+
+            li.appendChild(select);
+          }
 
           lista.appendChild(li);
         });
       } else {
-        lista.textContent = 'Nenhum equipamento cadastrado.';
+        lista.innerHTML = '<li>Nenhum equipamento cadastrado.</li>';
       }
     });
   }
-
-  carregarEquipamentos();
 </script>
 
 </body>
