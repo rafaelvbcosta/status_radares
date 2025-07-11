@@ -1,34 +1,135 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Status dos Equipamentos</title>
+  <meta charset="UTF-8" />
+  <title>Status dos Equipamentos - Firebase</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; max-width: 600px; margin: auto; }
-    h1 { text-align: center; }
-    ul { list-style: none; padding: 0; }
-    li { background: white; margin-bottom: 10px; padding: 10px; border-radius: 8px; display: flex; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .status { width: 16px; height: 16px; border-radius: 50%; margin-right: 15px; }
-    .verde { background-color: #4CAF50; }
-    .amarelo { background-color: #FFC107; }
-    .vermelho { background-color: #F44336; }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 20px auto;
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      background: white;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .status-circle {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid #555;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .verde { background-color: #4CAF50; border-color: #4CAF50; }
+    .amarelo { background-color: #FFC107; border-color: #FFC107; }
+    .vermelho { background-color: #F44336; border-color: #F44336; }
+    select {
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
-  <h1>Status dos Equipamentos</h1>
-  <ul id="lista-equipamentos"></ul>
 
-  <script>
-    fetch('status.json')
-      .then(response => response.json())
-      .then(dados => {
-        const lista = document.getElementById('lista-equipamentos');
-        dados.forEach(equip => {
-          const item = document.createElement('li');
-          item.innerHTML = `<span class="status ${equip.status}"></span> ${equip.nome}`;
-          lista.appendChild(item);
+<h1>Status dos Equipamentos</h1>
+
+<ul id="lista-equipamentos">
+  <!-- Equipamentos carregados aqui -->
+</ul>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA6_vXFyZK6kmj6oWIUclR4VpZmGZ5In-Y",
+    authDomain: "status-radares.firebaseapp.com",
+    databaseURL: "https://status-radares-default-rtdb.firebaseio.com",
+    projectId: "status-radares",
+    storageBucket: "status-radares.firebasestorage.app",
+    messagingSenderId: "581067300450",
+    appId: "1:581067300450:web:2b324f158be44fbacc3b3b",
+    measurementId: "G-2XGG503Q90"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  const lista = document.getElementById("lista-equipamentos");
+  const coresStatus = ["verde", "amarelo", "vermelho"];
+
+  function carregarEquipamentos() {
+    const equipamentosRef = ref(db, 'equipamentos');
+    onValue(equipamentosRef, (snapshot) => {
+      const dados = snapshot.val();
+      lista.innerHTML = '';
+      if (dados) {
+        Object.entries(dados).forEach(([id, equipamento]) => {
+          const li = document.createElement('li');
+
+          const circulo = document.createElement('span');
+          circulo.className = `status-circle ${equipamento.status}`;
+          circulo.title = `Status atual: ${equipamento.status}`;
+          circulo.style.cursor = 'pointer';
+
+          const select = document.createElement('select');
+          coresStatus.forEach(cor => {
+            const option = document.createElement('option');
+            option.value = cor;
+            option.textContent = cor.charAt(0).toUpperCase() + cor.slice(1);
+            if (cor === equipamento.status) option.selected = true;
+            select.appendChild(option);
+          });
+
+          select.addEventListener('change', () => {
+            set(ref(db, `equipamentos/${id}/status`), select.value);
+          });
+
+          const nomeSpan = document.createElement('span');
+          nomeSpan.textContent = equipamento.nome;
+          nomeSpan.style.marginLeft = '10px';
+          nomeSpan.style.flexGrow = '1';
+
+          const infoDiv = document.createElement('div');
+          infoDiv.className = 'info';
+          infoDiv.appendChild(circulo);
+          infoDiv.appendChild(nomeSpan);
+          li.appendChild(infoDiv);
+          li.appendChild(select);
+
+          lista.appendChild(li);
         });
-      });
-  </script>
+      } else {
+        lista.textContent = 'Nenhum equipamento cadastrado.';
+      }
+    });
+  }
+
+  carregarEquipamentos();
+</script>
+
 </body>
 </html>
