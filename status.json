@@ -1,0 +1,5 @@
+[
+  { "nome": "Equipamento A", "status": "verde" },
+  { "nome": "Equipamento B", "status": "amarelo" },
+  { "nome": "Equipamento C", "status": "vermelho" }
+]
